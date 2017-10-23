@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <title>jsClip</title>
+  <style>
+     body{background:#333;}
+     .box{position:absolute;top:100px;left:220px;}
+     .img1,.img2{position:absolute;}
+     .img1{opacity:0.3;}
+     .img2{clip:rect(50px,250px,250px,50px);}
+     .main{width:200px;height:200px;border:1px solid #fff;position:absolute;top:50px;left:50px;
+     cursor:move}
+     .minDiv{width:8px;height:8px;background:#fff;position:absolute;}
+     .top_left{left:-4px;top:-4px;cursor:nw-resize;}
+     .top_middle{top:-4px;left:50%;margin-left:-4px;cursor:n-resize;}
+     .top_right{top:-4px;left:100%;margin-left:-4px;cursor:ne-resize;}
+     .middle_left{left:-4px;top:50%;margin-top:-4px;cursor:w-resize;}
+     .middle_right{right:-4px;top:50%;margin-top:-4px;cursor:e-resize;}
+     .bottom_left{left:-4px;top:100%;margin-top:-4px;cursor:sw-resize;}
+     .bottom_middle{left:50%;margin-left:-4px;top:100%;margin-top:-4px;cursor:s-resize;}
+     .bottom_right{left:100%;top:100%;margin-left:-4px;margin-top:-4px;cursor:se-resize;}
+     .preview{position:absolute;width:200px;height:200px;top:100px;left:820px;
+         overflow:hidden;margin-left:20px;}
+     .img3{position:absolute;top:0;left:0}
+     
+  </style>
+</head>
+<body>
+    <div class="box" id="box">
+       <img src="2wa.jpg" class="img1" id="img1"/>
+       <img src="2wa.jpg" class="img2" id="img2"/>
+       <div class="main" id="main" draggable="true">
+          <div class="minDiv top_left" id="top_left"></div>
+          <div class="minDiv top_middle" id="top_middle"></div>
+          <div class="minDiv top_right" id="top_right"></div>
+          <div class="minDiv middle_left" id="middle_left"></div>
+          <div class="minDiv middle_right" id="middle_right"></div>
+          <div class="minDiv bottom_left" id="bottom_left"></div>
+          <div class="minDiv bottom_middle" id="bottom_middle"></div>
+          <div class="minDiv bottom_right" id="bottom_right"></div>
+       </div>
+    </div>
+    <div class="preview" id="preview">
+       <img src="2wa.jpg" id="img3" class="img3"/>
+    </div>
+    <script>
+        window.onload= function(){
+            const $ = (id)=>{
+                return document.getElementById(id);
+            }
+
+            const getmainPosition = (id) =>{
+      
+              let left = $(id).offsetLeft;
+              let top = $(id).offsetTop;
+              let parent = $(id).offsetParent;
+              while(parent!=null){
+                left += parent.offsetLeft;
+                top += parent.offsetTop;
+                parent = parent.offsetParent;
+                return {left,top}
+              }
+            }
+     
+            
+            let contact = '';
+            let isTrue = false;
+           
+           
+            //往右变宽
+           const goWidth = (e) => {
+              let clientX = e.clientX;
+               //mian的宽度
+              let mainWidth = $("main").offsetWidth-2;
+               //mian离屏幕左侧的距离
+               let mainClientLeft = getmainPosition("main").left;
+               //鼠标变化的距离
+               let clientoffsetX = clientX -  mainWidth - mainClientLeft;
+               let maxMainWidth = $("img2").offsetWidth -2- $("main").offsetLeft;
+               let newmainWidth = mainWidth + clientoffsetX;
+               if(newmainWidth>maxMainWidth){
+                newmainWidth = maxMainWidth;
+               }
+              $("main").style.width = newmainWidth + "px";
+             
+           }
+
+           //往左变宽
+           const goLeftWidth = (e) => {
+              let clientX = e.clientX;
+              //mian的宽度
+              let mainWidth = $("main").offsetWidth-2;
+              let mainMaxWidth = mainWidth + $("main").offsetLeft;
+              //mian离屏幕左侧的距离
+              let mainClientLeft = getmainPosition("main").left;
+              //鼠标变化的距离
+              let clientoffsetX = mainClientLeft - clientX;
+              let newMainLeft = $("main").offsetLeft - clientoffsetX;
+              let newMainWidth =  mainWidth + clientoffsetX;
+              if(newMainLeft<0){
+                newMainLeft = 0;
+               
+                newMainWidth = mainMaxWidth
+                // newMainWidth = mainWidth 
+              }
+            
+              $("main").style.width = newMainWidth + "px";
+              $("main").style.left = newMainLeft + "px";
+           }
+
+           //往上变高
+           const goTopHeight = (e) => {
+                //鼠标位置
+                let clientY = e.clientY;
+                //main离屏幕位置
+                let mainClientTop = getmainPosition("main").top;
+                //main的高度
+                let mainHeight = $("main").offsetHeight-2;
+                //鼠标变化的距离
+                let clientoffsetY =  (clientY -mainClientTop);
+                let newmainTop = $("main").offsetTop + clientoffsetY;
+                let newmainHeight = mainHeight - clientoffsetY;
+                let maxMainHeight = mainHeight + $("main").offsetTop;
+                if(newmainTop<0){
+                  newmainTop = 0;
+                  newmainHeight = maxMainHeight;
+                }
+                $("main").style.height = newmainHeight + "px";
+                $("main").style.top =  newmainTop + "px";
+                
+           }
+
+         
+
+           //往下变高
+           const goHeight = (e) => {
+              let clientY = e.clientY;
+               //mian的高度
+               let mainHeight = $("main").offsetHeight-2;
+               //mian离屏幕左侧的距离
+               let mainClientTop = getmainPosition("main").top;
+               //鼠标变化的距离
+               let clientoffsetY = clientY -  mainHeight - mainClientTop;
+               let newMainHeight = mainHeight + clientoffsetY ;
+               //
+               let maxMainHeight = $("img2").offsetHeight - $("main").offsetTop-2;
+               if(newMainHeight>maxMainHeight){
+                newMainHeight = maxMainHeight;
+               }
+              $("main").style.height = newMainHeight + "px";
+           }
+           
+           //选择框变化
+           const setChoice = ()=> {
+              let top = $("main").offsetTop;
+              let right = $("main").offsetLeft + $("main").offsetWidth;
+              let bottom = $("main").offsetTop + $("main").offsetHeight;
+              let left = $("main").offsetLeft;
+              $("img2").style.clip = `rect(${top}px,${right}px,${bottom}px,${left}px)`;
+
+             
+             
+           }
+
+
+
+            //右边拉宽
+            $("middle_right").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "middle_right";
+                isTrue = true;
+            }
+
+            
+            //左边拉宽
+            $("middle_left").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "middle_left";
+                isTrue = true;
+            }
+ 
+            //下面变高
+            $("bottom_middle").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "bottom_middle";
+                isTrue = true;
+            }
+            //上面变高
+          
+            $("top_middle").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "top_middle";
+                isTrue = true;
+            }
+            //左上拉
+            
+            $("top_left").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "top_left";
+                isTrue = true;
+            }
+            //右上拉
+            $("top_right").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "top_right";
+                isTrue = true;
+            }
+             //左下拉
+            $("bottom_left").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "bottom_left";
+                isTrue = true;
+            }
+      
+              //右下拉
+            $("bottom_right").onmousedown = function(e){
+                e.stopPropagation();
+                contact = "bottom_right";
+                isTrue = true;
+            }
+
+            //预览图片的移动
+            const goPreview = () => {
+              $("preview").style.width = $("main").offsetWidth - 2 + "px";
+              $("preview").style.height = $("main").offsetHeight - 2 + "px";
+              $("img3").style.left = -$("main").offsetLeft + "px";
+              $("img3").style.top = -$("main").offsetTop + "px";
+            }
+
+        
+            
+
+          let oldXDrag,oldYDrag,oldmainLeft,oldmainTop,mainWidth,mainHeight;
+         
+        
+          $("main").ondragstart = function(e){
+             oldXDrag = e.screenX;
+             oldYDrag = e.screenY;
+             oldmainLeft = $("main").offsetLeft;
+             oldmainTop = $("main").offsetTop;
+             mainWidth = $("main").offsetWidth - 2;
+             mainHeight = $("main").offsetHeight - 2;
+            
+          }
+         
+          
+          //拖动main框
+          
+          const goDrag = (e) => {
+
+            let x = e.screenX;
+             let y = e.screenY;
+             let xDistance = x - oldXDrag;
+             let yDistance = y - oldYDrag;
+             let top = oldmainTop + yDistance;
+             let right = oldmainLeft + mainWidth + xDistance;
+             let bottom = top + mainHeight;
+             let left = oldmainLeft + xDistance;
+             let maxLeft = $("img2").offsetWidth - $("main").offsetWidth;
+             let maxTop = $("img2").offsetHeight - $("main").offsetHeight;
+             let maxImg = $("img2").offsetWidth;
+             let newMainLeft = oldmainLeft + xDistance;
+             if(top<0){
+               top=0
+               bottom = $("main").offsetHeight;
+             }else if(top>maxTop){
+               top = maxTop
+             }
+
+             if(newMainLeft<0){
+              newMainLeft=0
+             }else if(newMainLeft>maxLeft){
+               newMainLeft = maxLeft;
+             }
+
+             if(right>maxImg){
+              right = maxImg;
+              left = maxImg - $("main").offsetWidth-2;
+             }
+
+             if(left<0){
+               left = 0;
+               right = $("main").offsetWidth-2;
+             }
+
+             
+             $("img2").style.clip = `rect(${top}px,${right}px,${bottom}px,${left}px)`;
+             $("main").style.left =  newMainLeft+ "px";
+             $("main").style.top = top + "px";
+             
+
+          }
+       
+          $("main").ondrag = function(e){
+            
+             goDrag(e)
+             goPreview()
+          }
+
+          $("main").ondragend = function(e){
+            goDrag(e)
+            goPreview()
+          }
+              
+          /*
+          会有一些冲突。拖动效果好，但裁剪不是很好
+          let isdrag = false;
+          let ismousedown = false
+          $("main").onmousedown = function(e){
+             e.stopPropagation();
+             isdrag = true;
+             ismousedown = true;
+             oldXDrag = e.screenX;
+             oldYDrag = e.screenY;
+             oldmainLeft = $("main").offsetLeft;
+             oldmainTop = $("main").offsetTop;
+             mainWidth = $("main").offsetWidth - 2;
+             mainHeight = $("main").offsetHeight - 2;
+          }
+
+          $("main").onmousemove = function(e){
+             e.stopPropagation();
+             if(isdrag == true&&ismousedown==true){
+               goDrag(e)
+               goPreview()
+             }
+          }
+
+          $("main").onmouseup = function(e){
+             e.stopPropagation();
+             isdrag = false;
+             ismousedown = false;
+          }
+          */
+           window.onmousemove = function(e){
+              if(isTrue){
+
+                  switch(contact){
+                    case "middle_right":
+                      goWidth(e)
+                      break;
+                    case "bottom_middle":
+                      goHeight(e)
+                      break;
+                    case "top_middle":
+                      goTopHeight(e)
+                      break;
+                    case "middle_left":
+                      goLeftWidth(e)
+                      break;
+                    case  "top_left":
+                      goTopHeight(e)
+                      goLeftWidth(e)
+                      
+                      break;
+                    case "top_right":
+                      goTopHeight(e)
+                      goWidth(e)
+                      break;
+                    case "bottom_left":
+                      goHeight(e)
+                      goLeftWidth(e)
+                      break;
+                    case "bottom_right":
+                      goHeight(e)
+                      goWidth(e)
+                      break;
+                    default:
+                       alert("going wrong")
+                  }
+                  setChoice()
+                  goPreview()
+              }
+
+           }
+
+           goPreview()
+
+         
+            window.onmouseup = function(e){
+                isTrue = false;
+            }
+
+            
+        }
+    </script>
+</body>
+</html>
